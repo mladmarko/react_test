@@ -34,6 +34,17 @@ export default function ArticlePage() {
 
 
     useEffect(() => {
+        function findAndLoadArticle(data) {
+            let article = data.find(el => el.id === Number(id));
+            if (!article) {
+                navigate("/404");
+            } else {
+                setArticle(article);
+                document.title = "Article " + article.title;
+                loadComments(article.id);
+            }
+        }
+
         if (state) {
             document.title = "Article " + article.title;
             loadComments(article.id)
@@ -49,18 +60,9 @@ export default function ArticlePage() {
                 findAndLoadArticle(articles);
             }
         }
-    }, []);
+    }, [state, article, navigate, id]);
 
-    const findAndLoadArticle = (data) => {
-        let article = data.find(el => el.id === Number(id));
-        if (!article) {
-            navigate("/404");
-        } else {
-            setArticle(article);
-            document.title = "Article " + article.title;
-            loadComments(article.id);
-        }
-    }
+
 
     const loadComments = (articleId) => {
         setLoadingComments(true);
