@@ -1,37 +1,27 @@
 import {
     Backdrop,
     Box,
-    Button, CircularProgress,
+    CircularProgress,
     Container,
     Divider,
-    List,
-    ListItem,
-    ListItemText,
-    Skeleton,
     Typography
 } from "@mui/material";
 import {useLocation, useNavigate, useParams} from "react-router-dom";
 import {useEffect, useState} from "react";
-import axios from "axios";
 import LoginDialog from "../login/loginDialog";
-import CommentForm from "./commentForm";
-import {Comment} from "../../styles/comment";
 import Utils from "../../helpers/utils";
 import Article from "../../helpers/article";
+import ArticleComments from "./articleComments";
+import {useLocalStorage} from "../../hooks/useLocalStorage";
 
 export default function ArticlePage() {
     const {state} = useLocation();
-    const [comments, setComments] = useState([]);
-    const [loadingComments, setLoadingComments] = useState(false);
     const [showLoginDialog, setShowLoginDialog] = useState(false);
-    const [showCommentForm, setShowCommentForm] = useState(false);
     const [loadingPage, setLoadingPage] = useState(false);
-
     const [article, setArticle] = useState(state ? state.article : {});
-
+    const [articles, setArticles] = useLocalStorage("articles", null);
     const {id} = useParams();
     const navigate = useNavigate();
-
 
     useEffect(() => {
         function findAndLoadArticle(data) {
@@ -41,19 +31,19 @@ export default function ArticlePage() {
             } else {
                 setArticle(article);
                 document.title = "Article " + article.title;
-                loadComments(article.id);
             }
         }
 
         if (state) {
             document.title = "Article " + article.title;
-            loadComments(article.id)
         } else {
-            let articles = JSON.parse(localStorage.getItem('articles'));
             if (!articles) {
                 setLoadingPage(true);
                 Article.pullArticles().then((data) => {
                     findAndLoadArticle(data);
+                }).catch(error => {
+                    console.log(error);
+                }).finally(() => {
                     setLoadingPage(false);
                 });
             } else {
@@ -62,58 +52,9 @@ export default function ArticlePage() {
         }
     }, [state, article, navigate, id]);
 
-
-
-    const loadComments = (articleId) => {
-        setLoadingComments(true);
-        axios.get(`http://www.scripttic.com:8000/api/v1/article/${articleId}/comment`)
-            .then((response) => {
-                setComments(response.data);
-            })
-            .finally(_ => {
-                setLoadingComments(false);
-            })
-    }
-
-    const renderListItem = (primaryText, secondaryText) => {
-        return <ListItemText
-            primary={primaryText}
-            secondary={
-                <Typography
-                    component="span"
-                    variant="body2"
-                    color="text.primary"
-                >
-                    {secondaryText}
-                </Typography>
-            }
-        />
-    }
-
-    const renderComments = comments.map((comment) => {
-        return <ListItem key={comment.id} disableGutters={true}>
-            <Comment>
-                {renderListItem(comment.title, comment.body)}
-            </Comment>
-        </ListItem>;
-    });
-
-    const renderCommentsSkeleton = () => {
-        return <ListItem disableGutters={true}>
-            {renderListItem(<Skeleton animation="wave"/>, <Skeleton animation="wave"/>)}
-        </ListItem>;
-    };
-
-    const handleClickOpen = () => {
-        if (localStorage.getItem('token')) {
-            setShowCommentForm(true);
-        } else {
-            setShowLoginDialog(true);
-        }
-    };
-
     return (
         <Container maxWidth="lg">
+
             <Backdrop open={loadingPage}>
                 <CircularProgress/>
             </Backdrop>
@@ -134,23 +75,11 @@ export default function ArticlePage() {
                 </Typography>
                 <Divider light={true}/>
 
-                <List>
-                    {loadingComments ? renderCommentsSkeleton() : renderComments}
-                </List>
-
-                {!showCommentForm &&
-                    <Button variant="outlined" fullWidth={true} onClick={handleClickOpen}>
-                        Leave comment
-                    </Button>
-                }
+                <ArticleComments article={article} loginDialog={(value) => setShowLoginDialog(value)}></ArticleComments>
 
                 <LoginDialog isDialogOpened={showLoginDialog}
                              handleCloseDialog={() => setShowLoginDialog(false)}/>
 
-                {showCommentForm && <CommentForm article={article}
-                                                 comments={comments}
-                                                 setComments={(value) => setComments(value)}
-                                                 handleCloseFrom={() => setShowCommentForm(false)}/>}
             </Box>
         </Container>
     );

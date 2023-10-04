@@ -1,13 +1,14 @@
 import {Alert, Button, Dialog, DialogContent, DialogTitle, Snackbar, Stack, TextField} from "@mui/material";
 import {Form, Field} from 'react-final-form';
 import {FORM_ERROR} from 'final-form'
-import axios from "axios";
-import qs from 'qs';
 import {useState} from "react";
+import {useAuthContext} from "../../contexts/authProvider";
 
 
 const LoginDialog = ({isDialogOpened, handleCloseDialog}) => {
     const [openSnack, setOpenSnack] = useState(false);
+    const {auth} = useAuthContext();
+
     const handleClose = () => {
         handleCloseDialog(false);
     };
@@ -16,41 +17,14 @@ const LoginDialog = ({isDialogOpened, handleCloseDialog}) => {
         setOpenSnack(false);
     };
 
-    const pullUserData = async token => {
-        const options = {
-            method: 'GET',
-            headers: {'Authorization': `Bearer ${token}`},
-            url: 'http://www.scripttic.com:8000/api/v1/user'
-        };
-        const result = await axios(options);
-
-        localStorage.setItem("user", JSON.stringify(result.data));
-    }
-
     const onSubmit = async values => {
-        const data = {
-            grant_type: 'Bearer',
-            email: values.email,
-            password: values.password
-        };
-
         try {
-            const options = {
-                method: 'POST',
-                headers: {'content-type': 'application/x-www-form-urlencoded'},
-                data: qs.stringify(data),
-                url: 'http://www.scripttic.com:8000/oauth2/token'
-            };
-            const result = await axios(options);
-
-            return await pullUserData(result.data)
+            await auth.login(values)
                 .then(() => {
-                    localStorage.setItem("token", result.data);
                     handleClose();
                     setOpenSnack(true)
                 })
                 .catch((error) => {
-                    localStorage.removeItem("token", result.data);
                     return {[FORM_ERROR]: "Incorrect username or password."};
                 })
 
@@ -119,7 +93,7 @@ const LoginDialog = ({isDialogOpened, handleCloseDialog}) => {
                                 <Stack spacing={1} direction="row" justifyContent="flex-end" mt={1}>
                                     <Button variant="contained" size="small"
                                             disabled={submitting} onClick={handleClose}>Cancel</Button>
-                                    <Button type="submit" variant="contained"  size="small"
+                                    <Button type="submit" variant="contained" size="small"
                                             disabled={submitting}>Login</Button>
                                 </Stack>
 

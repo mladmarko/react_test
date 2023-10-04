@@ -6,10 +6,32 @@ export default class Article {
     }
 
     static async pullArticles() {
-       return await axios.get("http://www.scripttic.com:8000/api/v1/article")
+        return await axios.get("http://www.scripttic.com:8000/api/v1/article")
             .then((response) => {
-                localStorage.setItem('articles', JSON.stringify(response.data));
                 return response.data;
             });
+    }
+
+    static async pullArticleComments(articleId) {
+        return await axios.get(`http://www.scripttic.com:8000/api/v1/article/${articleId}/comment`)
+            .then((response) => {
+                return response.data;
+            });
+    }
+
+    static async postArticleComment(articleId, values, auth) {
+        const user = auth.user;
+        const options = {
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${auth.token}`},
+            data: {
+                posterId: user.id,
+                body: values.body,
+                title: values.title
+            },
+            url: `http://www.scripttic.com:8000/api/v1/article/${articleId}/comment`
+        };
+
+        return axios(options);
     }
 }

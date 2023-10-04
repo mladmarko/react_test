@@ -3,24 +3,28 @@ import {useEffect, useState} from "react";
 import ArticleCard from "./articleCard";
 import ArticleSkeleton from "./articleSkeleton";
 import Article from "../../helpers/article";
+import {useLocalStorage} from "../../hooks/useLocalStorage";
 
 const SKELETON_ITEM_NUMBER = 6;
 export default function ArticleList() {
 
-    const [articles, setArticles] = useState([]);
+    const [articles, setArticles] = useLocalStorage("articles", []);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setLoading(true);
-        Article.pullArticles().then((data) =>{
+        Article.pullArticles().then((data) => {
             setArticles(data);
-            setLoading(false)
+        }).catch(error => {
+            console.log(error);
+        }).finally(() => {
+            setLoading(false);
         });
 
     }, []);
 
     const renderArticles = articles.map((article) => {
-        return <Grid item key={article.id} xs={6} >
+        return <Grid item key={article.id} xs={6}>
             <ArticleCard article={article}/>
         </Grid>
     });
@@ -35,8 +39,8 @@ export default function ArticleList() {
         return <Grid container
                      direction="row"
                      justifyContent="flex-start"
-                     spacing={{ xs: 2, md: 3 }}
-                     columns={{ xs: 4, sm: 8, md: 12 }}
+                     spacing={{xs: 2, md: 3}}
+                     columns={{xs: 4, sm: 8, md: 12}}
                      p={5}
         >
             {content}

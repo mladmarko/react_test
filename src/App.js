@@ -11,11 +11,9 @@ const PageNotFound = lazy(() => import('./components/servicePages/pageNotFound')
 
 function App() {
 
-
     useEffect(() => {
         document.title = "Scripttic Articles";
     }, []);
-
 
     return (
         <ThemeProvider theme={theme}>
